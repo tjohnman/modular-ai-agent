@@ -1,0 +1,20 @@
+services:
+  agent-system:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: agent-system
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../sessions:/app/sessions
+      - ../workspace:/app/workspace
+      - ../memory:/app/memory
+      - ../log:/app/log
+      - ../config.json:/app/config.json
+      - ../.env:/app/.env
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - WORKSPACE_HOST_PATH=${WORKSPACE_HOST_PATH}
+      - TZ=${TZ}
+    network_mode: host

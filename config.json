@@ -1,0 +1,11 @@
+{
+    "provider": "google",
+    "channels": [
+        "terminal",
+        "telegram"
+    ],
+    "google": {
+        "model": "gemini-3-flash-preview"
+    },
+    "sessions_dir": "sessions"
+}

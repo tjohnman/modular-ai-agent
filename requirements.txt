@@ -1,0 +1,9 @@
+google-genai
+python-dotenv
+ddgs
+docker
+requests
+faster-whisper
+piper-tts
+pillow
+croniter
