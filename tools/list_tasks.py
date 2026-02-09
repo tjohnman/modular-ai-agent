@@ -24,6 +24,7 @@ def execute(args):
         for task in tasks:
             output += f"- ID: {task.id}\n"
             output += f"  Prompt: {task.prompt}\n"
+            output += f"  Channel: {task.channel_name}\n"
             output += f"  Trigger: {task.trigger_type} = {task.trigger_value}\n"
             output += f"  Next Run: {task.next_run}\n"
             output += f"  Session: {task.session_file}\n"

@@ -265,9 +265,15 @@ class Engine:
 
     def _on_scheduled_task(self, task: ScheduledTask):
         """Callback for when a scheduled task is triggered."""
-        # Use the main channel (or current) for purely routing to the loop
-        # The loop will handle switching sessions and outputting to current_channel
-        self.input_queue.put((self.current_channel, task))
+        # Find the correct channel
+        target_channel = self.channels[0]
+        for ch in self.channels:
+            if getattr(ch, "name", "terminal") == task.channel_name:
+                target_channel = ch
+                break
+        
+        # Use the target channel for routing to the loop
+        self.input_queue.put((target_channel, task))
 
     def run(self):
         """Starts the conversation loop with multi-channel support."""
@@ -415,6 +421,9 @@ class Engine:
                                 
                                 # Inject Scheduler
                                 args["_scheduler"] = self.scheduler
+                                
+                                # Inject Channel Name
+                                args["_channel_name"] = getattr(self.current_channel, "name", "terminal")
 
                                 # Execute tool
                                 result = self.tools[tool_name]["execute"](args)

@@ -14,6 +14,7 @@ class TelegramChannel(Channel):
     """Implementation of I/O via a Telegram Bot."""
     
     def __init__(self, token: Optional[str] = None, restricted_chat_id: Optional[str] = None):
+        self.name = "telegram"
         self.token = token or os.getenv("TELEGRAM_BOT_TOKEN")
         self.restricted_chat_id = restricted_chat_id or os.getenv("TELEGRAM_CHAT_ID")
         self.api_url = f"https://api.telegram.org/bot{self.token}"

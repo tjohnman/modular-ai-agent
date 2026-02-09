@@ -33,6 +33,7 @@ def execute(args):
         prompt = args.get("prompt")
         when = args.get("when")
         cron = args.get("cron")
+        channel_name = args.get("_channel_name", "terminal")
         
         # We need the current session file to associate the task with it.
         # But tools don't have access to persistence directly unless we inject it.
@@ -79,7 +80,7 @@ def execute(args):
         else:
             return "Error: Must provide either 'when' or 'cron'."
 
-        task = scheduler.add_task(prompt, session_file, trigger_type, trigger_value)
+        task = scheduler.add_task(prompt, session_file, trigger_type, trigger_value, channel_name=channel_name)
         
         return f"Task scheduled successfully. ID: {task.id}. Next run: {task.next_run}"
 

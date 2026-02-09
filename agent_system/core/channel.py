@@ -13,6 +13,8 @@ class FileAttachment:
 class Channel(ABC):
     """Abstract base class for I/O channels."""
     
+    name: str = "unknown"
+
     @abstractmethod
     def get_input(self) -> Union[str, FileAttachment]:
         """Get input from the channel."""

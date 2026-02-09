@@ -10,6 +10,7 @@ from utils.persistence import Persistence
 class ScheduledTask:
     def __init__(self, prompt: str, session_file: str, 
                  trigger_type: str, trigger_value: str, 
+                 channel_name: str = "terminal",
                  task_id: Optional[str] = None, created_at: Optional[str] = None,
                  next_run: Optional[str] = None):
         self.id = task_id or str(uuid.uuid4())
@@ -17,6 +18,7 @@ class ScheduledTask:
         self.session_file = session_file
         self.trigger_type = trigger_type # 'at' or 'cron'
         self.trigger_value = trigger_value
+        self.channel_name = channel_name
         self.created_at = created_at or datetime.now().astimezone().isoformat()
         self.next_run = next_run
         
@@ -43,6 +45,7 @@ class ScheduledTask:
             "id": self.id,
             "prompt": self.prompt,
             "session_file": self.session_file,
+            "channel_name": self.channel_name,
             "trigger_type": self.trigger_type,
             "trigger_value": self.trigger_value,
             "created_at": self.created_at,
@@ -56,6 +59,7 @@ class ScheduledTask:
             session_file=data["session_file"],
             trigger_type=data["trigger_type"],
             trigger_value=data["trigger_value"],
+            channel_name=data.get("channel_name", "terminal"),
             task_id=data.get("id"),
             created_at=data.get("created_at"),
             next_run=data.get("next_run")
@@ -93,11 +97,11 @@ class Scheduler:
         # But for clean shutdown, we might want to wait a bit or just let daemon thread die.
         logger.info("[Scheduler] Stopped background thread signal sent.")
 
-    def add_task(self, prompt: str, session_file: str, trigger_type: str, trigger_value: str) -> ScheduledTask:
-        task = ScheduledTask(prompt, session_file, trigger_type, trigger_value)
+    def add_task(self, prompt: str, session_file: str, trigger_type: str, trigger_value: str, channel_name: str = "terminal") -> ScheduledTask:
+        task = ScheduledTask(prompt, session_file, trigger_type, trigger_value, channel_name=channel_name)
         self.tasks.append(task)
         self._save_tasks()
-        logger.info(f"[Scheduler] Added task {task.id}: {trigger_type}={trigger_value}, next_run={task.next_run}")
+        logger.info(f"[Scheduler] Added task {task.id}: {trigger_type}={trigger_value}, channel={channel_name}, next_run={task.next_run}")
         return task
 
     def remove_task(self, task_id: str) -> bool:

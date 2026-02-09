@@ -7,6 +7,9 @@ from agent_system.utils import logger
 class TerminalChannel(Channel):
     """Implementation of I/O via the terminal."""
     
+    def __init__(self):
+        self.name = "terminal"
+
     def get_input(self) -> Union[str, FileAttachment]:
         user_input = input("> ")
         
