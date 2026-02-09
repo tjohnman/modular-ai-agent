@@ -15,7 +15,7 @@ class Engine:
     
     def __init__(self, provider: Provider, channels: Union[Channel, List[Channel]], persistence: Persistence, 
                  system_prompt_path: str = "memory/SYSTEM.md", tools_dir: str = "tools", 
-                 workspace_dir: str = "workspace"):
+                 workspace_dir: str = "workspace", context_compact_threshold: Optional[int] = None):
         self.provider = provider
         # Ensure channels is a list
         self.channels = channels if isinstance(channels, list) else [channels]
@@ -24,6 +24,7 @@ class Engine:
         self.tools_dir = tools_dir
         self.workspace_dir = os.path.abspath(workspace_dir)
         self.host_workspace_dir = os.getenv("WORKSPACE_HOST_PATH")
+        self.context_compact_threshold = context_compact_threshold
         self.system_prompt = self._load_system_prompt(self.system_prompt_path)
         self.tools = {}
         self.commands = {}
@@ -462,6 +463,14 @@ class Engine:
                         # Ensure activity stops even for silent responses
                         self.current_channel.stop_activity()
                     break 
+
+                # Auto-compact check
+                if self.context_compact_threshold:
+                    usage = self.provider.get_usage()
+                    total_tokens = usage.get('total_tokens', 0)
+                    if total_tokens > self.context_compact_threshold:
+                        logger.info(f"[Engine] Token usage {total_tokens} exceeds threshold {self.context_compact_threshold}. Compacting...")
+                        self._handle_compact()
 
         except KeyboardInterrupt:
             for channel in self.channels:

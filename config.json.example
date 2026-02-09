@@ -1,0 +1,11 @@
+{
+    "provider": "google",
+    "channels": [
+        "terminal"
+    ],
+    "google": {
+        "model": "gemini-3-flash-preview",
+        "context_compact_threshold": 100000
+    },
+    "sessions_dir": "sessions"
+}

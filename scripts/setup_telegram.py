@@ -4,6 +4,8 @@ import time
 import requests
 from dotenv import load_dotenv
 
+import json
+
 def main():
     print("--- Telegram Bot Setup ---")
     print("This script will help you configure your Telegram Bot for the Agent Project.")
@@ -81,6 +83,29 @@ def main():
                 f.write(f"{k}={v}\n")
         
         print(f"Successfully updated {env_path}")
+
+        # Update config.json to include "telegram" channel
+        config_path = "config.json"
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r") as f:
+                    config = json.load(f)
+                
+                channels = config.get("channels", [])
+                if "telegram" not in channels:
+                    channels.append("telegram")
+                    config["channels"] = channels
+                    
+                    with open(config_path, "w") as f:
+                        json.dump(config, f, indent=4)
+                    print(f"Successfully added 'telegram' to channels in {config_path}")
+                else:
+                    print(f"'telegram' channel already exists in {config_path}")
+            except Exception as e:
+                print(f"Error updating {config_path}: {e}")
+        else:
+            print(f"Warning: {config_path} not found. Could not enable telegram channel automatically.")
+
     else:
         print("Skipped updating .env file.")
 

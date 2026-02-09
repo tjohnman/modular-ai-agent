@@ -86,13 +86,14 @@ The system follows a clean, modular architecture:
 
 4. **Configure channels**
    
-   Edit `config.json` to select your channels:
+   Edit `config.json` (created from `config.json.example`) to select your channels and settings:
    ```json
    {
        "provider": "google",
        "channels": ["terminal", "telegram"],
        "google": {
-           "model": "gemini-3-flash-preview"
+           "model": "gemini-3-flash-preview",
+           "context_compact_threshold": 100000
        },
        "sessions_dir": "sessions"
    }
@@ -118,6 +119,7 @@ That's it! The setup script will prompt you to deploy the application, which aut
 | `provider` | LLM provider to use | `"google"` |
 | `channels` | Array of channels to enable | `["terminal"]` |
 | `google.model` | Gemini model name | `"gemini-3-flash-preview"` |
+| `google.context_compact_threshold` | Token count threshold for auto-compaction | `100000` |
 | `sessions_dir` | Directory for session storage | `"sessions"` |
 
 **Example configurations:**
@@ -128,7 +130,8 @@ Terminal only:
     "provider": "google",
     "channels": ["terminal"],
     "google": {
-        "model": "gemini-3-flash-preview"
+        "model": "gemini-3-flash-preview",
+        "context_compact_threshold": 100000
     },
     "sessions_dir": "sessions"
 }
@@ -140,7 +143,8 @@ Multi-channel (Terminal + Telegram):
     "provider": "google",
     "channels": ["terminal", "telegram"],
     "google": {
-        "model": "gemini-3-flash-preview"
+        "model": "gemini-3-flash-preview",
+        "context_compact_threshold": 100000
     },
     "sessions_dir": "sessions"
 }

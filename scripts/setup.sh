@@ -30,17 +30,7 @@ else
     echo "Warning: requirements.txt not found."
 fi
 
-# 4. Telegram Setup (Optional)
-echo ""
-read -p "Do you want to set up Telegram integration? (y/n): " telegram_choice
-if [[ "$telegram_choice" == "y" || "$telegram_choice" == "Y" ]]; then
-    echo "Starting Telegram setup..."
-    python3 scripts/setup_telegram.py
-else
-    echo "Skipping Telegram setup."
-fi
-
-# 5. Environment File Check
+# 4. Environment File Check
 echo ""
 if [ ! -f ".env" ]; then
     if [ -f ".env.example" ]; then
@@ -54,9 +44,27 @@ else
     echo ".env file exists."
 fi
 
-# 6. Config File Check
+# 5. Config File Check
 if [ ! -f "config.json" ]; then
-    echo "⚠️  Warning: config.json not found. Please create it before deployment."
+    if [ -f "config.json.example" ]; then
+        echo "Creating config.json from config.json.example..."
+        cp config.json.example config.json
+        echo "⚠️  Please edit config.json to match your preferences."
+    else
+        echo "⚠️  Warning: config.json.example not found. Please create config.json manually."
+    fi
+else
+    echo "config.json exists."
+fi
+
+# 6. Telegram Setup (Optional)
+echo ""
+read -p "Do you want to set up Telegram integration? (y/n): " telegram_choice
+if [[ "$telegram_choice" == "y" || "$telegram_choice" == "Y" ]]; then
+    echo "Starting Telegram setup..."
+    python3 scripts/setup_telegram.py
+else
+    echo "Skipping Telegram setup."
 fi
 
 # 7. Docker Infrastructure

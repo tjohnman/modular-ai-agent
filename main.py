@@ -62,8 +62,12 @@ def main():
     
     persistence = Persistence(sessions_dir=config.get("sessions_dir", "sessions"))
     
+    # Extract context compact threshold
+    provider_settings = config.get(provider_name, {})
+    context_compact_threshold = provider_settings.get("context_compact_threshold")
+
     # Initialize and run the engine
-    engine = Engine(provider=provider, channels=channels, persistence=persistence)
+    engine = Engine(provider=provider, channels=channels, persistence=persistence, context_compact_threshold=context_compact_threshold)
     engine.run()
 
 if __name__ == "__main__":
