@@ -1,4 +1,6 @@
 import os
+import sys
+import time
 import re
 from typing import Union, Optional
 from agent_system.core.channel import Channel, FileAttachment
@@ -11,7 +13,21 @@ class TerminalChannel(Channel):
         self.name = "terminal"
 
     def get_input(self) -> Union[str, FileAttachment]:
-        user_input = input("> ")
+        try:
+            if not sys.stdin or not sys.stdin.isatty():
+                # If not interactive, check if we can read anything or if it's just closed/EOF immediately
+                # But easiest is just to try input() and catch EOFError, 
+                # OR if we know for sure it's non-interactive and likely to fail, we can skip.
+                # However, piping "echo hi | python main.py" is non-interactive but valid input.
+                # So we should rely on the try/except.
+                pass
+
+            user_input = input("> ")
+        except EOFError:
+            logger.warning("[Terminal] Input stream closed (EOF). Switching to output-only mode.")
+            while True:
+                time.sleep(3600) # Sleep indefinitely to keep thread alive but idle
+            
         
         # Handle /file <path> command
         if user_input.startswith("/file "):
