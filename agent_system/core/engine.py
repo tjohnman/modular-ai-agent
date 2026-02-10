@@ -3,6 +3,8 @@ import importlib.util
 import shutil
 import queue
 import threading
+import json
+from datetime import datetime
 from typing import List, Dict, Any, Union, Optional
 from agent_system.core.provider import Provider
 from agent_system.core.channel import Channel, FileAttachment
@@ -159,13 +161,35 @@ class Engine:
 
     def _handle_compact(self):
         self.current_channel.send_status("Compacting context... please wait.")
-        history = self.persistence.load_history()
-        if len(history) <= 6:
+        
+        # Load full raw history to salvage metadata
+        raw_entries = []
+        if os.path.exists(self.persistence.session_file):
+            with open(self.persistence.session_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        raw_entries.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+        
+        # Load logical message history
+        messages = self.persistence.load_history()
+        if len(messages) <= 6:
             self.current_channel.send_output("Not enough history to compact (less than 6 turns).")
             return True
         
-        history_to_summarize = history[:-6]
-        history_to_keep = history[-6:]
+        # Find a safe split point
+        split_index = len(messages) - 6
+        while split_index >= 0 and messages[split_index]["role"] != "user":
+            split_index -= 1
+            
+        if split_index < 0:
+            logger.info("[Engine] Could not find a safe break point (user message) for compaction. Aborting.")
+            self.current_channel.send_output("Context is large, but a safe break point for compaction wasn't found. Continuing for now...")
+            return True
+            
+        history_to_summarize = messages[:split_index]
+        history_to_keep = messages[split_index:]
         
         summary_prompt = (
             "Please provide a concise summary of our conversation so far, capturing all important details and context. "
@@ -174,18 +198,34 @@ class Engine:
             "Begin the summary immediately without any preamble."
         )
         
-        # We include the system prompt to give context to the summarizer
+        # Generate summary using the provider
         temp_messages = [{"role": "system", "content": self.system_prompt}] + history_to_summarize + [{"role": "user", "content": summary_prompt}]
         summary = self.provider.generate_response(temp_messages)
         
-        new_history = [
+        # Prepare the new messages
+        new_messages = [
             {"role": "system", "content": f"Summary of previous conversation:\n{summary}"},
             {"role": "system", "content": "The previous conversation history has been compacted to save space. The summary above captures the key points. The most recent turns follow."}
         ]
-        new_history.extend(history_to_keep)
+        new_messages.extend(history_to_keep)
         
-        self.persistence.replace_history(new_history)
-        self.current_channel.send_output(f"Context compacted. Preserved the last 6 turns.")
+        # Salvage all metadata entries
+        metadata_entries = [entry for entry in raw_entries if entry.get("type") == "metadata"]
+        
+        # Write everything back to the file at once to avoid Bad file descriptor/concurrent access issues
+        with open(self.persistence.session_file, "w", encoding="utf-8") as f:
+            # Metadata first
+            for entry in metadata_entries:
+                f.write(json.dumps(entry) + "\n")
+            
+            # New messages second
+            for msg in new_messages:
+                # Ensure each message has a timestamp and is correctly serialized
+                msg["timestamp"] = datetime.now().isoformat()
+                serializable_msg = self.persistence._make_serializable(msg)
+                f.write(json.dumps(serializable_msg) + "\n")
+                
+        self.current_channel.send_output(f"Context compacted. Preserved the last {len(history_to_keep)} turns and session metadata.")
         return True
 
     def _handle_clear(self):

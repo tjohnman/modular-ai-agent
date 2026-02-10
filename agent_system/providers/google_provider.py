@@ -33,6 +33,17 @@ class GoogleProvider(Provider):
         self._cached_config_hash: Optional[str] = None
         self._cache_ttl_seconds: int = 3600 # 1 hour default
 
+    def _make_serializable(self, obj: Any) -> Any:
+        """Recursively converts bytes to base64 strings for JSON serialization."""
+        import base64
+        if isinstance(obj, bytes):
+            return {"__bytes_b64__": base64.b64encode(obj).decode("utf-8")}
+        if isinstance(obj, dict):
+            return {k: self._make_serializable(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [self._make_serializable(v) for v in obj]
+        return obj
+
     def generate_response(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None) -> Any:
         if not self.client:
             return "[Error: google-genai package not installed or API key missing]"
@@ -69,7 +80,7 @@ class GoogleProvider(Provider):
                     "parts": [{
                         "function_response": {
                             "name": msg["name"],
-                            "response": msg["tool_result"]
+                            "response": self._make_serializable(msg["tool_result"])
                         }
                     }]
                 })

@@ -60,14 +60,15 @@ class Persistence:
         if name:
             data["name"] = name
         if tool_call:
-            data["tool_call"] = self._make_serializable(tool_call)
+            data["tool_call"] = tool_call
         if tool_result:
-            data["tool_result"] = self._make_serializable(tool_result)
+            data["tool_result"] = tool_result
         if parts:
             data["parts"] = parts
             
+        serializable_data = self._make_serializable(data)
         with open(self.session_file, "a", encoding="utf-8") as f:
-            f.write(json.dumps(data) + "\n")
+            f.write(json.dumps(serializable_data) + "\n")
 
     def set_session_title(self, title: str):
         """Sets the title for the current session by appending a metadata record."""
@@ -152,6 +153,7 @@ class Persistence:
             with open(self.session_file, "r", encoding="utf-8") as f:
                 for line in f:
                     data = json.loads(line)
+                    data = self._restore_serialized(data)
                     # Skip metadata records and other non-message types
                     if data.get("type") == "metadata" or "role" not in data:
                         continue
@@ -160,20 +162,21 @@ class Persistence:
                     if "name" in data:
                         msg["name"] = data["name"]
                     if "tool_call" in data:
-                        msg["tool_call"] = self._restore_serialized(data["tool_call"])
+                        msg["tool_call"] = data["tool_call"]
                     if "tool_result" in data:
-                        msg["tool_result"] = self._restore_serialized(data["tool_result"])
+                        msg["tool_result"] = data["tool_result"]
                     if "parts" in data:
                         msg["parts"] = data["parts"]
                     history.append(msg)
         return history
 
-    def replace_history(self, messages: List[Dict[str, str]]):
+    def replace_history(self, messages: List[Dict[str, Any]]):
         """Overwrites the current session file with a new set of messages."""
         with open(self.session_file, "w", encoding="utf-8") as f:
             for msg in messages:
                 msg["timestamp"] = datetime.now().isoformat()
-                f.write(json.dumps(msg) + "\n")
+                serializable_msg = self._make_serializable(msg)
+                f.write(json.dumps(serializable_msg) + "\n")
 
     def save_scheduled_tasks(self, tasks: List[Dict[str, str]]):
         """Saves the scheduled tasks list to a JSON file."""
