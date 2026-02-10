@@ -279,6 +279,7 @@ class Engine:
     def run(self):
         """Starts the conversation loop with multi-channel support."""
         for channel in self.channels:
+            channel.set_commands(self.commands)
             channel.send_output("AI Agent System initialized. Type '/exit' or '/quit' to end the session.")
             # Start a thread for each channel's get_input
             thread = threading.Thread(target=self._poll_channel, args=(channel,), daemon=True)

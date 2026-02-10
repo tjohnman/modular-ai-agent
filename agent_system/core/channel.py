@@ -39,3 +39,7 @@ class Channel(ABC):
     def send_status(self, text: str):
         """Sends a technical status update (may be suppressed by some channels)."""
         pass
+
+    def set_commands(self, commands: dict):
+        """Registers available slash commands with the channel platform."""
+        pass

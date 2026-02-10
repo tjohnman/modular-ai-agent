@@ -343,6 +343,34 @@ class TelegramChannel(Channel):
         """Telegram suppresses technical status updates to avoid chat clutter."""
         pass
 
+    def set_commands(self, commands: dict):
+        """Registers slash commands with Telegram via setMyCommands API."""
+        tg_commands = []
+        for cmd, info in commands.items():
+            # Telegram commands must not start with / for setMyCommands
+            # and must only contain lowercase English letters, digits and underscores.
+            cmd_text = cmd.lstrip("/").lower()
+            if not re.match(r'^[a-z0-9_]+$', cmd_text):
+                continue
+                
+            tg_commands.append({
+                "command": cmd_text,
+                "description": info.get("description", "No description")
+            })
+            
+        if not tg_commands:
+            return
+
+        try:
+            resp = self.session.post(f"{self.api_url}/setMyCommands", json={"commands": tg_commands})
+            resp.raise_for_status()
+            if resp.json().get("ok"):
+                logger.info(f"[Telegram] Successfully registered {len(tg_commands)} commands.")
+            else:
+                logger.error(f"[Telegram] Failed to register commands: {resp.json().get('description')}")
+        except Exception as e:
+            logger.error(f"[Telegram] Error calling setMyCommands: {e}")
+
     def _format_markdown(self, text: str) -> str:
         """Converts basic Markdown to Telegram-compatible HTML, avoiding interleaved tags."""
         
