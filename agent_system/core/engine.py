@@ -160,20 +160,32 @@ class Engine:
     def _handle_compact(self):
         self.current_channel.send_status("Compacting context... please wait.")
         history = self.persistence.load_history()
-        if not history:
-            self.current_channel.send_output("Nothing to compact yet.")
+        if len(history) <= 6:
+            self.current_channel.send_output("Not enough history to compact (less than 6 turns).")
             return True
+        
+        history_to_summarize = history[:-6]
+        history_to_keep = history[-6:]
         
         summary_prompt = (
             "Please provide a concise summary of our conversation so far, capturing all important details and context. "
-            "This summary will replace our current history to save space, while preserving the key information. "
+            "This summary will replace the earlier part of our history to save space. "
             "Make sure to include any important facts, decisions, or user preferences mentioned. "
             "Begin the summary immediately without any preamble."
         )
-        temp_messages = history + [{"role": "user", "content": summary_prompt}]
+        
+        # We include the system prompt to give context to the summarizer
+        temp_messages = [{"role": "system", "content": self.system_prompt}] + history_to_summarize + [{"role": "user", "content": summary_prompt}]
         summary = self.provider.generate_response(temp_messages)
-        self.persistence.replace_history([{"role": "system", "content": summary}])
-        self.current_channel.send_output("Context compacted.")
+        
+        new_history = [
+            {"role": "system", "content": f"Summary of previous conversation:\n{summary}"},
+            {"role": "system", "content": "The previous conversation history has been compacted to save space. The summary above captures the key points. The most recent turns follow."}
+        ]
+        new_history.extend(history_to_keep)
+        
+        self.persistence.replace_history(new_history)
+        self.current_channel.send_output(f"Context compacted. Preserved the last 6 turns.")
         return True
 
     def _handle_clear(self):
