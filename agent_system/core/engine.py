@@ -475,6 +475,13 @@ class Engine:
         except KeyboardInterrupt:
             for channel in self.channels:
                 channel.send_output("\nInterrupted by user. Goodbye!")
+        finally:
+            # Explicit cleanup
+            logger.info("[Engine] Shutting down...")
+            self.scheduler.stop()
+            for channel in self.channels:
+                if hasattr(channel, "stop_activity"):
+                    channel.stop_activity()
 
     def _scan_and_send_output_files(self) -> str:
         """Scans the workspace/output directory and sends files via the active channel. 

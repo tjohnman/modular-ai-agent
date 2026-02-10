@@ -316,6 +316,9 @@ class TelegramChannel(Channel):
         """Stops the current chat action."""
         if self.active_activity:
             self.stop_activity_event.set()
+            if self.activity_thread and self.activity_thread.is_alive():
+                # Wait briefly for the thread to exit to avoid overlapping threads
+                self.activity_thread.join(timeout=1.0)
             self.active_activity = None
             self.activity_thread = None
 
