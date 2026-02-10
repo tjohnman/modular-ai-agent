@@ -24,7 +24,6 @@ def check_docker():
         sys.exit(1)
 
 def main():
-    check_docker()
     # Load environment variables from .env
     load_dotenv()
     
@@ -71,4 +70,5 @@ def main():
     engine.run()
 
 if __name__ == "__main__":
+    check_docker()
     main()

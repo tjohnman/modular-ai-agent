@@ -29,6 +29,9 @@ class MockChannel(Channel):
     def show_activity(self, action="typing"):
         self.outputs.append(f"ACTIVITY: {action}")
 
+    def send_status(self, text):
+        self.outputs.append(f"STATUS: {text}")
+
 class TestAudioSupport(unittest.TestCase):
 
     def setUp(self):
@@ -38,19 +41,20 @@ class TestAudioSupport(unittest.TestCase):
         
         self.channel = MockChannel("Test")
         
+        self.workspace_dir = os.path.abspath("test_audio_workspace")
         self.engine = Engine(
             provider=self.provider,
             channels=[self.channel],
             persistence=self.persistence,
-            workspace_dir="test_audio_workspace"
+            workspace_dir=self.workspace_dir
         )
-        if not os.path.exists("test_audio_workspace"):
-            os.makedirs("test_audio_workspace")
+        if not os.path.exists(self.workspace_dir):
+            os.makedirs(self.workspace_dir)
 
     def tearDown(self):
         import shutil
-        if os.path.exists("test_audio_workspace"):
-            shutil.rmtree("test_audio_workspace")
+        if os.path.exists(self.workspace_dir):
+            shutil.rmtree(self.workspace_dir)
 
     def test_audio_upload_triggers_turn(self):
         # Create a mock FileAttachment with audio mime type
@@ -75,16 +79,18 @@ class TestAudioSupport(unittest.TestCase):
         time.sleep(1) # Give it time to process and call provider
         
         # Verify persistence call for USER message (triggers turn)
+        expected_path = os.path.join(self.workspace_dir, "voice.ogg")
         self.persistence.save_message.assert_any_call(
             "user", 
-            "Uploaded audio file: voice.ogg"
+            "[Uploaded voice.ogg]",
+            parts=[{'file_path': expected_path, 'mime_type': 'audio/ogg'}]
         )
         
         # Verify provider was CALLED
         self.provider.generate_response.assert_called()
         
         # Verify response was sent back to channel
-        self.assertTrue(any("AI: I heard your audio." in o for o in self.channel.outputs))
+        self.assertTrue(any("I heard your audio." in o for o in self.channel.outputs))
 
     def test_generic_file_upload_silent(self):
         # Create a mock FileAttachment with generic mime type

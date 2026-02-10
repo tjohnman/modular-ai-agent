@@ -29,6 +29,9 @@ class MockChannel(Channel):
     def show_activity(self, action="typing"):
         self.outputs.append(f"ACTIVITY: {action}")
 
+    def send_status(self, text):
+        self.outputs.append(f"STATUS: {text}")
+
 class TestMultiChannel(unittest.TestCase):
 
     def setUp(self):
@@ -60,14 +63,14 @@ class TestMultiChannel(unittest.TestCase):
         # Send input to channel 1
         self.channel1.inputs.put("Hello from 1")
         time.sleep(0.5)
-        self.assertIn("AI: Response 1", self.channel1.outputs)
+        self.assertIn("Response 1", self.channel1.outputs)
         self.assertIn("ACTIVITY: typing", self.channel1.outputs)
         self.assertEqual(len(self.channel2.outputs), 1) # Just the init message
         
         # Send input to channel 2
         self.channel2.inputs.put("Hello from 2")
         time.sleep(0.5)
-        self.assertIn("AI: Response 2", self.channel2.outputs)
+        self.assertIn("Response 2", self.channel2.outputs)
         self.assertIn("ACTIVITY: typing", self.channel2.outputs)
         # channel1 should still have its messages: Init + Activity + Response
         self.assertEqual(len(self.channel1.outputs), 3) 

@@ -29,6 +29,9 @@ class MockChannel(Channel):
     def show_activity(self, action="typing"):
         self.outputs.append(f"ACTIVITY: {action}")
 
+    def send_status(self, text):
+        self.outputs.append(f"STATUS: {text}")
+
 class TestFileUploadContext(unittest.TestCase):
 
     def setUp(self):
@@ -79,9 +82,11 @@ class TestFileUploadContext(unittest.TestCase):
         # Verify provider was NOT called (no model turn)
         self.provider.generate_response.assert_not_called()
         
-        # Verify no output was sent to the channel (init message excluded)
+        # Verify no output was sent to the channel (init message and activity excluded)
         # channel.outputs[0] is initialized message
-        self.assertEqual(len([o for o in self.channel.outputs if not o.startswith("AI Agent System initialized")]), 0)
+        # new: channel.outputs[1] is ACTIVITY: upload_document
+        relevant_outputs = [o for o in self.channel.outputs if not o.startswith("AI Agent System initialized") and "upload_document" not in o]
+        self.assertEqual(len(relevant_outputs), 0)
 
 if __name__ == "__main__":
     unittest.main()

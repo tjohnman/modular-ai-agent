@@ -17,9 +17,10 @@ class TestTelegramPersistentIndicators(unittest.TestCase):
         with patch.dict(os.environ, {"TELEGRAM_BOT_TOKEN": self.token, "TELEGRAM_CHAT_ID": self.chat_id}):
             self.channel = TelegramChannel()
 
-    @patch("requests.post")
-    def test_show_activity_periodic(self, mock_post):
-        mock_post.return_value.json.return_value = {"ok": True}
+    def test_show_activity_periodic(self):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"ok": True}
+        self.channel.session.post = MagicMock(return_value=mock_resp)
         
         # Start activity
         self.channel.show_activity("typing")
@@ -31,15 +32,18 @@ class TestTelegramPersistentIndicators(unittest.TestCase):
         self.channel.stop_activity()
         
         # Should have called at least twice
-        self.assertGreaterEqual(mock_post.call_count, 2)
+        self.assertGreaterEqual(self.channel.session.post.call_count, 2)
         
         # Check payload
-        last_call_args = mock_post.call_args_list[0]
+        last_call_args = self.channel.session.post.call_args_list[0]
         self.assertEqual(last_call_args[1]["json"]["action"], "typing")
         self.assertEqual(last_call_args[1]["json"]["chat_id"], self.chat_id)
 
-    @patch("requests.post")
-    def test_stop_activity_on_send(self, mock_post):
+    def test_stop_activity_on_send(self):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"ok": True}
+        self.channel.session.post = MagicMock(return_value=mock_resp)
+        
         # Start activity
         self.channel.show_activity("typing")
         self.assertTrue(self.channel.active_activity == "typing")
