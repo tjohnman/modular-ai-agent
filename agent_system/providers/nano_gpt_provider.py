@@ -129,12 +129,19 @@ class NanoGPTProvider(Provider):
                             })
                             continue
                         mime_type = part.get("mime_type", "application/octet-stream")
-                        b64 = base64.b64encode(file_bytes).decode("ascii")
-                        data_url = f"data:{mime_type};base64,{b64}"
-                        content_parts.append({
-                            "type": "image_url",
-                            "image_url": {"url": data_url},
-                        })
+                        if mime_type.startswith("image/"):
+                            b64 = base64.b64encode(file_bytes).decode("ascii")
+                            data_url = f"data:{mime_type};base64,{b64}"
+                            content_parts.append({
+                                "type": "image_url",
+                                "image_url": {"url": data_url},
+                            })
+                        else:
+                            filename = part.get("file_path", "")
+                            content_parts.append({
+                                "type": "text",
+                                "text": f"[File uploaded: {filename} ({mime_type})]",
+                            })
                 openai_messages.append({"role": mapped_role, "content": content_parts})
             else:
                 openai_messages.append({"role": mapped_role, "content": msg.get("content", "")})
@@ -203,7 +210,7 @@ class NanoGPTProvider(Provider):
 
                     if self.debug_log_requests:
                         debug_info = self._build_request_debug(payload)
-                        error_msg = f"{error_msg}\n\nRequest Debug: {debug_info}"
+                        error_msg = f"{error_msg}\n\nRequest Debug:\n```text\n{debug_info}\n```"
 
                     if response.status_code in (429, 500, 502, 503, 504) and attempt < max_retries:
                         logger.warning(f"[NanoGPTProvider] Retryable error {response.status_code}: {error_msg}")
