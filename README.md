@@ -1,20 +1,20 @@
-# AI Agent System
+# Modular AI Agent
 
 A modular, extensible AI agent system powered by Google's Gemini API with multi-channel support, dynamic tool loading, and persistent session management.
 
-## ✨ Features
+## Features
 
-- **🤖 Multi-Provider Support**: Built with Google Gemini API (easily extensible to other LLM providers)
-- **📡 Multi-Channel I/O**: Interact via Terminal or Telegram
-- **🔧 Dynamic Tool System**: Hot-loadable tools with automatic discovery
-- **💾 Session Management**: Persistent conversation history with multi-session support
-- **⏰ Task Scheduling**: Schedule one-time or recurring tasks with cron expressions
-- **🐳 Sandboxed Execution**: Run Python code safely in isolated Docker containers
-- **🎙️ Audio Support**: Transcribe audio messages and generate speech
-- **🔍 Web Search**: Integrated DuckDuckGo search capabilities
-- **📁 File Handling**: Automatic file processing and delivery pipeline
+- **Multi-Provider Support**: Built with Google Gemini API and NanoGPT (easily extensible to other LLM providers)
+- **Multi-Channel I/O**: Interact via Terminal or Telegram
+- **Dynamic Tool System**: Hot-loadable tools with automatic discovery
+- **Session Management**: Persistent conversation history with multi-session support
+- **Task Scheduling**: Schedule one-time or recurring tasks with cron expressions
+- **Sandboxed Execution**: Run Python code safely in isolated Docker containers
+- **Audio Support**: Transcribe audio messages and generate speech
+- **Web Search**: Integrated DuckDuckGo search capabilities
+- **File Handling**: Automatic file processing and delivery pipeline
 
-## 🏗️ Architecture
+## Architecture
 
 The system follows a clean, modular architecture:
 
@@ -45,7 +45,7 @@ The system follows a clean, modular architecture:
 - **Scheduler**: Manages scheduled tasks with cron support
 - **Dynamic Tools**: Runtime-loaded tools from the `tools/` directory
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -79,6 +79,7 @@ The system follows a clean, modular architecture:
    Edit `.env` and add your credentials:
    ```bash
    GOOGLE_API_KEY=your_google_api_key_here
+   NANOGPT_API_KEY=your_nano_gpt_api_key_here
    TELEGRAM_BOT_TOKEN=your_bot_token_here  # Optional
    TELEGRAM_CHAT_ID=your_chat_id_here      # Optional
    WORKSPACE_HOST_PATH=/absolute/path/to/workspace  # For Docker
@@ -101,16 +102,17 @@ The system follows a clean, modular architecture:
 
 That's it! The setup script will prompt you to deploy the application, which automatically starts the agent as a service. If you declined deployment during setup, you can run it later with `bash scripts/deploy.sh`.
 
-## 📋 Configuration
+## Configuration
 
 ### Environment Variables (`.env`)
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `GOOGLE_API_KEY` | Your Google Gemini API key | ✅ Yes |
-| `TELEGRAM_BOT_TOKEN` | Telegram bot token from @BotFather | ⚠️ If using Telegram |
-| `TELEGRAM_CHAT_ID` | Your Telegram chat ID | ⚠️ If using Telegram |
-| `WORKSPACE_HOST_PATH` | Absolute path to workspace directory on host | ⚠️ For Docker deployment |
+| `GOOGLE_API_KEY` | Your Google Gemini API key | Required for Google provider |
+| `NANOGPT_API_KEY` | Your NanoGPT API key | Required for NanoGPT provider |
+| `TELEGRAM_BOT_TOKEN` | Telegram bot token from @BotFather | If using Telegram |
+| `TELEGRAM_CHAT_ID` | Your Telegram chat ID | If using Telegram |
+| `WORKSPACE_HOST_PATH` | Absolute path to workspace directory on host | For Docker deployment |
 
 ### Configuration File (`config.json`)
 
@@ -120,6 +122,10 @@ That's it! The setup script will prompt you to deploy the application, which aut
 | `channels` | Array of channels to enable | `["terminal"]` |
 | `google.model` | Gemini model name | `"gemini-3-flash-preview"` |
 | `google.context_compact_threshold` | Token count threshold for auto-compaction | `100000` |
+| `nano_gpt.model` | NanoGPT model name | `"gpt-4o-mini"` |
+| `nano_gpt.base_url` | NanoGPT API base URL | `"https://nano-gpt.com/api"` |
+| `nano_gpt.timeout_seconds` | Request timeout in seconds | `60` |
+| `nano_gpt.context_compact_threshold` | Token count threshold for auto-compaction | `100000` |
 | `sessions_dir` | Directory for session storage | `"sessions"` |
 
 **Example configurations:**
@@ -150,7 +156,22 @@ Multi-channel (Terminal + Telegram):
 }
 ```
 
-## 🎮 Usage
+NanoGPT:
+```json
+{
+    "provider": "nano_gpt",
+    "channels": ["terminal"],
+    "nano_gpt": {
+        "model": "zai-org/glm-4.7",
+        "base_url": "https://nano-gpt.com/api",
+        "timeout_seconds": 60,
+        "context_compact_threshold": 200000
+    },
+    "sessions_dir": "sessions"
+}
+```
+
+## Usage
 
 ### Slash Commands
 
@@ -197,7 +218,7 @@ Agent: [Uses schedule_task to create a reminder]
 Agent: [Transcribes audio and responds to content]
 ```
 
-## 🔧 Dynamic Tool System
+## Dynamic Tool System
 
 Tools are automatically discovered and loaded from the `tools/` directory at runtime.
 
@@ -246,7 +267,7 @@ def execute(params: dict) -> str:
 
 The tool will be automatically loaded on next startup or after `/reload`.
 
-## 🐳 Docker Deployment
+## Docker Deployment
 
 Deploy as a persistent service using Docker Compose:
 
@@ -267,7 +288,7 @@ The deployment includes:
 - Docker socket access for `python_analyser` tool
 - Timezone detection and configuration
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 .
@@ -289,7 +310,7 @@ The deployment includes:
 └── main.py               # Application entry point
 ```
 
-## 🧪 Testing
+## Testing
 
 Run the verification suite:
 
@@ -306,14 +327,14 @@ python verification/test_scheduler_integration.py
 python -m unittest discover verification/
 ```
 
-## 🔒 Security Considerations
+## Security Considerations
 
 - **Sandboxed Execution**: Python code runs in isolated Docker containers
 - **Environment Variables**: Sensitive credentials stored in `.env` (gitignored)
 - **Telegram**: Bot only responds to configured `TELEGRAM_CHAT_ID`
 - **Docker Socket**: Required for `python_analyser` but grants container access
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Areas for improvement:
 
@@ -323,18 +344,18 @@ Contributions are welcome! Areas for improvement:
 - Enhanced error handling
 - Performance optimizations
 
-## 📝 License
+## License
 
 GNU Affero General Public License (AGPL)
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with [Google Gemini API](https://ai.google.dev/)
 - Uses [Faster Whisper](https://github.com/guillaumekln/faster-whisper) for audio transcription
 - Uses [Piper TTS](https://github.com/rhasspy/piper) for text-to-speech
 - Web search powered by [DuckDuckGo](https://duckduckgo.com/)
 
-## 📞 Support
+## Support
 
 For issues, questions, or contributions, please open an issue on GitHub.
 
