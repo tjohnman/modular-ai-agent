@@ -45,11 +45,13 @@ def main():
         model_name = nano_config.get("model", "gpt-4o-mini")
         base_url = nano_config.get("base_url", "https://nano-gpt.com/api")
         timeout_seconds = nano_config.get("timeout_seconds", 60)
+        debug_log_requests = nano_config.get("debug_log_requests", False) or os.getenv("NANOGPT_DEBUG") == "1"
         provider = NanoGPTProvider(
             api_key=nano_api_key,
             model_name=model_name,
             base_url=base_url,
             timeout_seconds=timeout_seconds,
+            debug_log_requests=debug_log_requests,
         )
     else:
         raise ValueError(f"Unsupported provider: {provider_name}")

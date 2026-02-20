@@ -36,6 +36,7 @@ class TestAudioSupport(unittest.TestCase):
 
     def setUp(self):
         self.provider = MagicMock()
+        self.provider.supports_audio_parts.return_value = True
         self.persistence = MagicMock()
         self.persistence.load_history.return_value = []
         
@@ -91,6 +92,39 @@ class TestAudioSupport(unittest.TestCase):
         
         # Verify response was sent back to channel
         self.assertTrue(any("I heard your audio." in o for o in self.channel.outputs))
+
+    def test_audio_auto_transcribe_for_non_audio_provider(self):
+        self.provider.supports_audio_parts.return_value = False
+        self.engine.tools["transcribe_audio"] = {
+            "schema": {},
+            "display_name": "Transcribing audio",
+            "execute": lambda params: "TRANSCRIPT"
+        }
+
+        audio_attachment = FileAttachment(
+            name="voice.ogg",
+            content_getter=lambda: b"fake audio data",
+            mime_type="audio/ogg"
+        )
+
+        self.provider.generate_response.return_value = "Got it."
+
+        import threading
+        engine_thread = threading.Thread(target=self.engine.run, daemon=True)
+        engine_thread.start()
+
+        time.sleep(0.5)
+
+        self.channel.inputs.put(audio_attachment)
+        time.sleep(1)
+
+        self.assertTrue(
+            any(
+                call.args[0] == "user"
+                and "Audio transcription for 'voice.ogg'" in call.args[1]
+                for call in self.persistence.save_message.call_args_list
+            )
+        )
 
     def test_generic_file_upload_silent(self):
         # Create a mock FileAttachment with generic mime type

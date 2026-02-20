@@ -19,11 +19,13 @@ class NanoGPTProvider(Provider):
         model_name: str = "gpt-4o-mini",
         base_url: str = "https://nano-gpt.com/api",
         timeout_seconds: int = 60,
+        debug_log_requests: bool = False,
     ):
         self.api_key = api_key
         self.model_name = model_name
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
+        self.debug_log_requests = debug_log_requests
         self.last_usage: Dict[str, Any] = {
             "prompt_tokens": 0,
             "candidates_tokens": 0,
@@ -139,6 +141,30 @@ class NanoGPTProvider(Provider):
 
         return openai_messages
 
+    def _build_request_debug(self, payload: Dict[str, Any]) -> str:
+        messages = payload.get("messages", [])
+        summary = []
+        summary.append(f"model={payload.get('model')}")
+        if "tools" in payload:
+            tool_names = [t.get("function", {}).get("name") for t in payload.get("tools", [])]
+            summary.append(f"tools={tool_names}")
+        summary.append(f"tool_choice={payload.get('tool_choice')}")
+
+        msg_summaries = []
+        for msg in messages:
+            role = msg.get("role")
+            content = msg.get("content")
+            if isinstance(content, list):
+                kinds = []
+                for part in content:
+                    kinds.append(part.get("type", "unknown"))
+                msg_summaries.append(f"{role}:parts({','.join(kinds)})")
+            else:
+                text_len = len(content) if isinstance(content, str) else 0
+                msg_summaries.append(f"{role}:text(len={text_len})")
+        summary.append("messages=" + "; ".join(msg_summaries))
+        return " | ".join(summary)
+
     def generate_response(
         self,
         messages: List[Dict[str, Any]],
@@ -174,6 +200,10 @@ class NanoGPTProvider(Provider):
                         error_msg = error_data.get("error", {}).get("message") or response.text
                     except Exception:
                         error_msg = response.text
+
+                    if self.debug_log_requests:
+                        debug_info = self._build_request_debug(payload)
+                        error_msg = f"{error_msg}\n\nRequest Debug: {debug_info}"
 
                     if response.status_code in (429, 500, 502, 503, 504) and attempt < max_retries:
                         logger.warning(f"[NanoGPTProvider] Retryable error {response.status_code}: {error_msg}")

@@ -364,6 +364,29 @@ class Engine:
                     
                     if is_audio or is_image or user_input.caption:
                         logger.info(f"[Engine] Media/Captioned File Received (Stored as Parts): {user_input.name}")
+                        if is_audio and not self.provider.supports_audio_parts():
+                            tool = self.tools.get("transcribe_audio") if self.tools else None
+                            if tool:
+                                try:
+                                    logger.info(f"[Engine] Auto-transcribing audio: {user_input.name}")
+                                    tparams = {
+                                        "audio_file": user_input.name,
+                                        "_workspace": self.workspace_dir,
+                                    }
+                                    transcript = tool["execute"](tparams)
+                                    if transcript:
+                                        self.persistence.save_message(
+                                            "user",
+                                            f"Audio transcription for '{user_input.name}':\n\n{transcript}"
+                                        )
+                                except Exception as e:
+                                    logger.error(f"[Engine] Auto-transcription failed: {e}")
+                                    self.persistence.save_message(
+                                        "user",
+                                        f"Audio transcription failed for '{user_input.name}': {e}"
+                                    )
+                            else:
+                                logger.warning("[Engine] transcribe_audio tool not available; skipping auto-transcription.")
                         # Proceed to model turn
                     else:
                         logger.info(f"[Engine] File Received and Saved: {user_input.name}")

@@ -13,3 +13,7 @@ class Provider(ABC):
     def get_usage(self) -> Dict[str, Any]:
         """Returns the usage metadata for the provider."""
         ...
+
+    def supports_audio_parts(self) -> bool:
+        """Whether the provider supports native audio parts in messages."""
+        return False

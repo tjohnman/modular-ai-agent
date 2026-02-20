@@ -183,6 +183,9 @@ class GoogleProvider(Provider):
     def get_usage(self) -> Dict[str, Any]:
         return self.last_usage
 
+    def supports_audio_parts(self) -> bool:
+        return True
+
     def _get_or_create_cache(self, system_instruction: Optional[str], tools: Optional[List[Dict[str, Any]]]) -> Optional[Any]:
         """Manages explicit context caching for system instructions and tools."""
         if not self.client or not (system_instruction or tools):

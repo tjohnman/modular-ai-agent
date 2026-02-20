@@ -6,7 +6,7 @@ import sys
 # Add project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from tools.text_to_speech import execute
+from tools.text_to_speech import execute, DEFAULT_MODEL_NAME
 
 class TestTextToSpeech(unittest.TestCase):
 
@@ -74,6 +74,48 @@ class TestTextToSpeech(unittest.TestCase):
         # Verify frames were written
         mock_wave_file.writeframes.assert_any_call(b"chunk1")
         mock_wave_file.writeframes.assert_any_call(b"chunk2")
+
+    @patch("tools.text_to_speech.PiperVoice")
+    @patch("tools.text_to_speech.download_file")
+    @patch("os.path.exists")
+    @patch("wave.open")
+    def test_tts_language_default_voice(self, mock_wave_open, mock_exists, mock_download, mock_piper_voice_tool):
+        mock_exists.return_value = True
+        mock_voice_instance = MagicMock()
+        mock_voice_instance.synthesize.return_value = []
+        mock_piper_voice_tool.load.return_value = mock_voice_instance
+
+        params = {
+            "text": "Hello world",
+            "output_file": "test.wav",
+            "language": "en",
+            "_workspace": self.workspace
+        }
+
+        result = execute(params)
+        self.assertIn("Successfully generated speech audio", result)
+        self.assertIn(f"Voice: {DEFAULT_MODEL_NAME}", result)
+
+    @patch("tools.text_to_speech.PiperVoice")
+    @patch("tools.text_to_speech.download_file")
+    @patch("os.path.exists")
+    @patch("wave.open")
+    def test_tts_custom_voice(self, mock_wave_open, mock_exists, mock_download, mock_piper_voice_tool):
+        mock_exists.return_value = True
+        mock_voice_instance = MagicMock()
+        mock_voice_instance.synthesize.return_value = []
+        mock_piper_voice_tool.load.return_value = mock_voice_instance
+
+        params = {
+            "text": "Hello world",
+            "output_file": "test.wav",
+            "voice": "en_US-lessac-medium",
+            "_workspace": self.workspace
+        }
+
+        result = execute(params)
+        self.assertIn("Successfully generated speech audio", result)
+        self.assertIn("Voice: en_US-lessac-medium", result)
 
     @patch("tools.text_to_speech.requests.get")
     def test_download_failed(self, mock_get):

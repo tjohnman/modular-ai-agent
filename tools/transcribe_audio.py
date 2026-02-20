@@ -19,6 +19,10 @@ SCHEMA = {
                 "enum": ["tiny", "base", "small", "medium"],
                 "default": "base",
                 "description": "The Whisper model size. 'base' is the recommended default for Raspberry Pi 4 (good balance of speed/accuracy). Use 'small' or 'medium' for higher accuracy at the cost of processing time."
+            },
+            "language": {
+                "type": "STRING",
+                "description": "Optional language code to guide transcription (e.g., 'en', 'es', 'fr'). If omitted, language is auto-detected."
             }
         },
         "required": ["audio_file"]
@@ -29,6 +33,7 @@ def execute(params: dict) -> str:
     """Executes the transcription tool."""
     audio_filename = params.get("audio_file")
     model_size = params.get("model_size", "base")
+    language = params.get("language")
     workspace_dir = params.get("_workspace") # Injected by the Engine
     
     if not workspace_dir:
@@ -44,7 +49,11 @@ def execute(params: dict) -> str:
         # Load model on CPU (optimized for low-spec systems)
         model = WhisperModel(model_size, device="cpu", compute_type="int8")
         
-        segments, info = model.transcribe(audio_path, beam_size=5)
+        transcribe_kwargs = {"beam_size": 5}
+        if language:
+            transcribe_kwargs["language"] = language
+
+        segments, info = model.transcribe(audio_path, **transcribe_kwargs)
         
         transcription = ""
         for segment in segments:

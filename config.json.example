@@ -11,6 +11,7 @@
         "model": "gpt-4o-mini",
         "base_url": "https://nano-gpt.com/api",
         "timeout_seconds": 60,
+        "debug_log_requests": false,
         "context_compact_threshold": 100000
     },
     "sessions_dir": "sessions"

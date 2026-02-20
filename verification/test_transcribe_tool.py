@@ -53,6 +53,31 @@ class TestTranscribeAudio(unittest.TestCase):
         self.assertIn("Detected Language: en", result)
         mock_model_instance.transcribe.assert_called_once_with(self.audio_path, beam_size=5)
 
+    @patch("tools.transcribe_audio.WhisperModel")
+    def test_transcribe_with_language(self, mock_whisper):
+        mock_segment = MagicMock()
+        mock_segment.start = 0.0
+        mock_segment.end = 1.0
+        mock_segment.text = "Hola"
+
+        mock_info = MagicMock()
+        mock_info.language = "es"
+        mock_info.language_probability = 0.95
+
+        mock_model_instance = MagicMock()
+        mock_model_instance.transcribe.return_value = ([mock_segment], mock_info)
+        mock_whisper.return_value = mock_model_instance
+
+        params = {
+            "audio_file": self.audio_file,
+            "language": "es",
+            "_workspace": self.workspace
+        }
+
+        result = execute(params)
+        self.assertIn("Detected Language: es", result)
+        mock_model_instance.transcribe.assert_called_once_with(self.audio_path, beam_size=5, language="es")
+
     def test_file_not_found(self):
         params = {
             "audio_file": "missing.ogg",
