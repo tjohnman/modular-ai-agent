@@ -234,6 +234,7 @@ Tools are automatically discovered and loaded from the `tools/` directory at run
 | `schedule_task` | Schedules tasks with cron or one-time execution |
 | `list_tasks` | Lists all scheduled tasks |
 | `delete_task` | Deletes a scheduled task by ID |
+| `send_file` | Queues a workspace file for delivery via the output pipeline (move or copy) |
 
 ### Creating Custom Tools
 
