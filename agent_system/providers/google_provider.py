@@ -5,6 +5,7 @@ import os
 from typing import List, Dict, Any, Optional
 from agent_system.core.provider import Provider
 from agent_system.utils import logger
+from agent_system.providers.file_utils import read_file_bytes
 
 try:
     from google import genai
@@ -97,22 +98,16 @@ class GoogleProvider(Provider):
                         parts.append({"text": p["text"]})
                     elif "file_path" in p:
                         fpath = p["file_path"]
-                        try:
-                            if os.path.exists(fpath):
-                                with open(fpath, "rb") as f:
-                                    file_bytes = f.read()
-                                parts.append({
-                                    "inline_data": {
-                                        "mime_type": p["mime_type"],
-                                        "data": file_bytes
-                                    }
-                                })
-                            else:
-                                logger.warning(f"[GoogleProvider] File not found: {fpath}")
-                                parts.append({"text": f"[File Missing: {os.path.basename(fpath)}]"})
-                        except Exception as e:
-                            logger.error(f"[GoogleProvider] Error reading multimodal part {fpath}: {e}")
-                            parts.append({"text": f"[Error reading file: {os.path.basename(fpath)}]"})
+                        file_bytes = read_file_bytes(fpath)
+                        if file_bytes is not None:
+                            parts.append({
+                                "inline_data": {
+                                    "mime_type": p["mime_type"],
+                                    "data": file_bytes
+                                }
+                            })
+                        else:
+                            parts.append({"text": f"[File Missing: {os.path.basename(fpath)}]"})
             else:
                 parts.append({"text": msg["content"]})
                 

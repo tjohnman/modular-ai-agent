@@ -7,5 +7,11 @@
         "model": "gemini-3-flash-preview",
         "context_compact_threshold": 100000
     },
+    "nano_gpt": {
+        "model": "gpt-4o-mini",
+        "base_url": "https://nano-gpt.com/api",
+        "timeout_seconds": 60,
+        "context_compact_threshold": 100000
+    },
     "sessions_dir": "sessions"
 }
