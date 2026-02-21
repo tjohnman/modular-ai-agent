@@ -3,13 +3,13 @@ from agent_system.utils import logger
 
 SCHEMA = {
     "name": "schedule_task",
-    "description": "Schedules a task to be executed at a specific time or recurrently.",
+    "description": "Schedules a task so the agent later receives the scheduled prompt to act on at a specific time or recurrently.",
     "parameters": {
         "type": "OBJECT",
         "properties": {
             "prompt": {
                 "type": "STRING",
-                "description": "The prompt to execute."
+                "description": "The prompt the agent will receive later as a user message to act on."
             },
             "when": {
                 "type": "STRING",

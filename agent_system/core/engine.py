@@ -417,7 +417,7 @@ class Engine:
                     # Save as USER message but do not echo it.
                     # We use 'user' role because the model is trained to respond to user messages.
                     # System messages at the end of the conversation are sometimes ignored or treated as status updates.
-                    user_msg = f"Scheduled Task: {user_input.prompt}"
+                    user_msg = f"{user_input.prompt}"
                     self.persistence.save_message("user", user_msg)
                     
                     # Set user_input to None to bypass slash commands and user message saving
