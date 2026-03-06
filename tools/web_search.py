@@ -1,5 +1,6 @@
 from ddgs import DDGS
 import json
+from tavily import TavilyClient
 
 # The SCHEMA for the Google GenAI tool definition
 SCHEMA = {
@@ -44,6 +45,12 @@ SCHEMA = {
                 "type": "STRING",
                 "description": "Specific backend for text search (e.g., 'api', 'html', 'lite'). Defaults to 'auto'.",
                 "default": "auto"
+            },
+            "provider": {
+                "type": "STRING",
+                "description": "Search provider to use: 'ddg' (DuckDuckGo) or 'tavily' (Tavily). Tavily only supports text search. Defaults to 'ddg'.",
+                "enum": ["ddg", "tavily"],
+                "default": "ddg"
             }
         },
         "required": ["query"]
@@ -59,17 +66,36 @@ def execute(params: dict) -> str:
     timelimit = params.get("timelimit")
     max_results = params.get("max_results", 10)
     backend = params.get("backend", "auto")
+    provider = params.get("provider", "ddg")
 
     try:
+        # Use Tavily for text searches when selected as provider
+        if provider == "tavily" and search_type == "text":
+            client = TavilyClient()
+            response = client.search(query=query, max_results=max_results)
+            results = [
+                {
+                    "title": r.get("title", ""),
+                    "href": r.get("url", ""),
+                    "body": r.get("content", ""),
+                    "score": r.get("score", 0)
+                }
+                for r in response.get("results", [])
+            ]
+            if not results:
+                return "No results found."
+            return json.dumps(results, indent=2)
+
+        # Fall back to DuckDuckGo for non-text types or when provider is "ddg"
         ddgs = DDGS()
         results = []
 
         if search_type == "text":
             results = ddgs.text(
-                query, 
-                region=region, 
-                safesearch=safesearch, 
-                timelimit=timelimit, 
+                query,
+                region=region,
+                safesearch=safesearch,
+                timelimit=timelimit,
                 max_results=max_results,
                 backend=backend
             )
