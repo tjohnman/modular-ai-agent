@@ -1,6 +1,7 @@
 google-genai
 python-dotenv
 ddgs
+tavily-python
 docker
 requests
 faster-whisper

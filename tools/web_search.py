@@ -5,7 +5,7 @@ import json
 SCHEMA = {
     "name": "web_search",
     "display_name": "Searching the web",
-    "description": "Performs web searches using DuckDuckGo. Supports text, images, videos, news, and books.",
+    "description": "Performs web searches using DuckDuckGo by default, or Tavily for text searches when provider='tavily'.",
     "parameters": {
         "type": "OBJECT",
         "properties": {
@@ -44,6 +44,12 @@ SCHEMA = {
                 "type": "STRING",
                 "description": "Specific backend for text search (e.g., 'api', 'html', 'lite'). Defaults to 'auto'.",
                 "default": "auto"
+            },
+            "provider": {
+                "type": "STRING",
+                "description": "Search provider to use: 'ddg' (DuckDuckGo) or 'tavily' (Tavily). Tavily only supports text search. Defaults to 'ddg'.",
+                "enum": ["ddg", "tavily"],
+                "default": "ddg"
             }
         },
         "required": ["query"]
@@ -59,17 +65,45 @@ def execute(params: dict) -> str:
     timelimit = params.get("timelimit")
     max_results = params.get("max_results", 10)
     backend = params.get("backend", "auto")
+    provider = params.get("provider", "ddg")
 
     try:
+        if provider not in {"ddg", "tavily"}:
+            return f"Error: Unsupported search provider '{provider}'."
+
+        if provider == "tavily":
+            if search_type != "text":
+                return "Error: Tavily only supports text search."
+
+            try:
+                from tavily import TavilyClient
+            except ImportError:
+                return "Error during web search: Tavily support is not installed. Install 'tavily-python' to use provider='tavily'."
+
+            client = TavilyClient()
+            response = client.search(query=query, max_results=max_results)
+            results = [
+                {
+                    "title": r.get("title", ""),
+                    "href": r.get("url", ""),
+                    "body": r.get("content", ""),
+                    "score": r.get("score", 0)
+                }
+                for r in response.get("results", [])
+            ]
+            if not results:
+                return "No results found."
+            return json.dumps(results, indent=2)
+
         ddgs = DDGS()
         results = []
 
         if search_type == "text":
             results = ddgs.text(
-                query, 
-                region=region, 
-                safesearch=safesearch, 
-                timelimit=timelimit, 
+                query,
+                region=region,
+                safesearch=safesearch,
+                timelimit=timelimit,
                 max_results=max_results,
                 backend=backend
             )
