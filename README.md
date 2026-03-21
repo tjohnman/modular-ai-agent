@@ -11,7 +11,7 @@ A modular, extensible AI agent system powered by Google's Gemini API with multi-
 - **Task Scheduling**: Schedule one-time or recurring tasks with cron expressions
 - **Sandboxed Execution**: Run Python code safely in isolated Docker containers
 - **Audio Support**: Transcribe audio messages and generate speech
-- **Web Search**: Integrated DuckDuckGo search capabilities
+- **Web Search**: Integrated web search with DuckDuckGo by default and optional Tavily support for text search
 - **File Handling**: Automatic file processing and delivery pipeline
 
 ## Architecture
@@ -80,6 +80,7 @@ The system follows a clean, modular architecture:
    ```bash
    GOOGLE_API_KEY=your_google_api_key_here
    NANOGPT_API_KEY=your_nano_gpt_api_key_here
+   TAVILY_API_KEY=your_tavily_api_key_here    # Optional, only for provider="tavily" web search
    TELEGRAM_BOT_TOKEN=your_bot_token_here  # Optional
    TELEGRAM_CHAT_ID=your_chat_id_here      # Optional
    WORKSPACE_HOST_PATH=/absolute/path/to/workspace  # For Docker
@@ -110,6 +111,7 @@ That's it! The setup script will prompt you to deploy the application, which aut
 |----------|-------------|----------|
 | `GOOGLE_API_KEY` | Your Google Gemini API key | Required for Google provider |
 | `NANOGPT_API_KEY` | Your NanoGPT API key | Required for NanoGPT provider |
+| `TAVILY_API_KEY` | Your Tavily API key | Optional, only for `web_search` with `provider="tavily"` |
 | `TELEGRAM_BOT_TOKEN` | Telegram bot token from @BotFather | If using Telegram |
 | `TELEGRAM_CHAT_ID` | Your Telegram chat ID | If using Telegram |
 | `WORKSPACE_HOST_PATH` | Absolute path to workspace directory on host | For Docker deployment |
@@ -197,6 +199,9 @@ The agent supports built-in commands for management:
 ```
 You: Search for the latest news about AI
 Agent: [Uses web_search tool to find results]
+
+You: Use the web_search tool with provider tavily to search for the latest news about AI
+Agent: [Uses Tavily text search and returns mapped results]
 ```
 
 **Python Code Execution:**
@@ -227,7 +232,7 @@ Tools are automatically discovered and loaded from the `tools/` directory at run
 | Tool | Description |
 |------|-------------|
 | `get_current_time` | Returns current system date and time |
-| `web_search` | Performs web searches via DuckDuckGo |
+| `web_search` | Performs web searches via DuckDuckGo by default, or Tavily for text search when `provider="tavily"` |
 | `python_analyser` | Runs Python code in sandboxed Docker container with full network access, compilers, system administration tools, and more |
 | `transcribe_audio` | Transcribes audio files using Faster Whisper |
 | `text_to_speech` | Generates speech from text using Piper TTS |
@@ -316,16 +321,14 @@ The deployment includes:
 Run the verification suite:
 
 ```bash
-# Activate virtual environment
-source venv/bin/activate
-
 # Run specific tests
-python verification/test_telegram_channel.py
-python verification/test_audio_support.py
-python verification/test_scheduler_integration.py
+./venv/bin/python verification/test_telegram_channel.py
+./venv/bin/python verification/test_audio_support.py
+./venv/bin/python verification/test_scheduler_integration.py
+./venv/bin/python verification/test_web_search.py
 
 # Run all tests
-python -m unittest discover verification/
+./venv/bin/python -m unittest discover verification/
 ```
 
 ## Security Considerations
@@ -354,7 +357,7 @@ GNU Affero General Public License (AGPL)
 - Built with [Google Gemini API](https://ai.google.dev/)
 - Uses [Faster Whisper](https://github.com/guillaumekln/faster-whisper) for audio transcription
 - Uses [Piper TTS](https://github.com/rhasspy/piper) for text-to-speech
-- Web search powered by [DuckDuckGo](https://duckduckgo.com/)
+- Web search powered by [DuckDuckGo](https://duckduckgo.com/) and [Tavily](https://tavily.com/)
 
 ## Support
 
