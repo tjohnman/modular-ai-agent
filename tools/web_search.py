@@ -1,12 +1,11 @@
 from ddgs import DDGS
 import json
-from tavily import TavilyClient
 
 # The SCHEMA for the Google GenAI tool definition
 SCHEMA = {
     "name": "web_search",
     "display_name": "Searching the web",
-    "description": "Performs web searches using DuckDuckGo. Supports text, images, videos, news, and books.",
+    "description": "Performs web searches using DuckDuckGo by default, or Tavily for text searches when provider='tavily'.",
     "parameters": {
         "type": "OBJECT",
         "properties": {
@@ -69,8 +68,18 @@ def execute(params: dict) -> str:
     provider = params.get("provider", "ddg")
 
     try:
-        # Use Tavily for text searches when selected as provider
-        if provider == "tavily" and search_type == "text":
+        if provider not in {"ddg", "tavily"}:
+            return f"Error: Unsupported search provider '{provider}'."
+
+        if provider == "tavily":
+            if search_type != "text":
+                return "Error: Tavily only supports text search."
+
+            try:
+                from tavily import TavilyClient
+            except ImportError:
+                return "Error during web search: Tavily support is not installed. Install 'tavily-python' to use provider='tavily'."
+
             client = TavilyClient()
             response = client.search(query=query, max_results=max_results)
             results = [
@@ -86,7 +95,6 @@ def execute(params: dict) -> str:
                 return "No results found."
             return json.dumps(results, indent=2)
 
-        # Fall back to DuckDuckGo for non-text types or when provider is "ddg"
         ddgs = DDGS()
         results = []
 
